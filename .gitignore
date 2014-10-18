@@ -8,6 +8,7 @@ ext/build/
 ext/modules/
 ext/Makefile*
 ext/config*
+!ext/config.m4
 ext/acinclude.m4
 ext/aclocal.m4
 ext/autom4te*
