@@ -25,9 +25,10 @@ class Serializer
                 } else {
                     let property = this->getProperty(obj, value);
                     if property instanceof \DateTime {
-                        let property = property->format(\DateTime::ISO8601);
+                        let data[value] = property->format("Y-m-d\\TH:i:sO");
+                    } else {
+                        let data[value] = property;
                     }
-                    let data[value] = property;
                 }
             }
         }
@@ -37,7 +38,17 @@ class Serializer
 
     public function getProperty(object obj, string property)
     {
-        string method;
+        string method, classname;
+
+        let classname = get_class(obj, true);
+
+%{
+        zend_class_entry *_obj_ce = zephir_fetch_class(classname TSRMLS_CC);
+        zval *_property_value = zend_read_property(_obj_ce, obj, Z_STRVAL_P(property), Z_STRLEN_P(property), 1 TSRMLS_CC);
+        if (Z_TYPE_P(_property_value) != IS_NULL) {
+            RETURN_ZVAL(_property_value, 1, 0);
+        }
+}%
 
         let method = "get" . property;
         if method_exists(obj, method) {

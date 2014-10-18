@@ -1,6 +1,9 @@
+vendor/
+composer.lock
+*.log
+
 # Zephir
 .temp/
-*.log
 
 # phpize
 .libs/

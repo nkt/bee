@@ -1,0 +1,21 @@
+{
+    "name": "nkt/bee",
+    "description": "The dead simple serializer",
+    "authors": [
+        {
+            "name": "Nikita Gusakov",
+            "email": "dev@nkt.me"
+        }
+    ],
+    "require": {
+        "php": ">=5.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~4.2"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Bee\\Test\\": "tests/"
+        }
+    }
+}
