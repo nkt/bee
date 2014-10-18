@@ -12,7 +12,7 @@
 #define PHP_BEE_VERSION     "0.0.1"
 #define PHP_BEE_EXTNAME     "bee"
 #define PHP_BEE_AUTHOR      "Nikita Gusakov"
-#define PHP_BEE_ZEPVERSION  "0.5.2a"
+#define PHP_BEE_ZEPVERSION  "0.5.4a"
 #define PHP_BEE_DESCRIPTION "The dead simple serializer"
 
 

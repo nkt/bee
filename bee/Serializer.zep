@@ -5,26 +5,27 @@ namespace Bee;
  */
 class Serializer
 {
-    public function serialize(obj, array keys) -> array
+    public function serialize(var obj, array keys) -> array
     {
         var data = [], key, value, property;
 
-        if typeof obj == "array" {
+        if unlikely is_array(obj) {
             for value in obj {
                 let data[] = this->serialize(value, keys);
             }
-        } else {
-            for key, value in keys {
-                if typeof key == "string" {
-                    let property = this->getProperty(obj, key);
-                    if typeof property == "null" {
-                        let data[key] = null;
-                    } else {
-                        let data[key] = this->serialize(property, value);
-                    }
+            return data;
+        }
+
+        for key, value in keys {
+            if typeof key == "string" {
+                let property = this->getProperty(obj, key);
+                if typeof property == "null" {
+                    let data[key] = null;
                 } else {
-                    let data[value] = this->getProperty(obj, value);
+                    let data[key] = this->serialize(property, value);
                 }
+            } else {
+                let data[value] = this->getProperty(obj, value);
             }
         }
 

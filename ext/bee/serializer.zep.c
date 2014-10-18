@@ -40,7 +40,7 @@ PHP_METHOD(Bee_Serializer, serialize) {
 	HashTable *_1, *_6;
 	HashPosition _0, _5;
 	zval *keys = NULL;
-	zval *obj, *keys_param = NULL, *data, *key = NULL, *value = NULL, *property = NULL, **_2, *_3 = NULL, **_7, *_9 = NULL;
+	zval *obj, *keys_param = NULL, *data, *key = NULL, *value = NULL, *property = NULL, **_2, *_3 = NULL, **_7;
 
 	ZEPHIR_MM_GROW();
 	zephir_fetch_params(1, 2, 0, &obj, &keys_param);
@@ -50,7 +50,7 @@ PHP_METHOD(Bee_Serializer, serialize) {
 	array_init(data);
 
 
-	if (Z_TYPE_P(obj) == IS_ARRAY) {
+	if (unlikely(Z_TYPE_P(obj) == IS_ARRAY)) {
 		zephir_is_iterable(obj, &_1, &_0, 0, 0, "bee/Serializer.zep", 16);
 		for (
 		  ; zephir_hash_get_current_data_ex(_1, (void**) &_2, &_0) == SUCCESS
@@ -61,29 +61,29 @@ PHP_METHOD(Bee_Serializer, serialize) {
 			zephir_check_call_status();
 			zephir_array_append(&data, _3, PH_SEPARATE, "bee/Serializer.zep", 14);
 		}
-	} else {
-		zephir_is_iterable(keys, &_6, &_5, 0, 0, "bee/Serializer.zep", 29);
-		for (
-		  ; zephir_hash_get_current_data_ex(_6, (void**) &_7, &_5) == SUCCESS
-		  ; zephir_hash_move_forward_ex(_6, &_5)
-		) {
-			ZEPHIR_GET_HMKEY(key, _6, _5);
-			ZEPHIR_GET_HVALUE(value, _7);
-			if (Z_TYPE_P(key) == IS_STRING) {
-				ZEPHIR_CALL_METHOD(&property, this_ptr, "getproperty", &_8, obj, key);
-				zephir_check_call_status();
-				if (Z_TYPE_P(property) == IS_NULL) {
-					zephir_array_update_zval(&data, key, &ZEPHIR_GLOBAL(global_null), PH_COPY | PH_SEPARATE);
-				} else {
-					ZEPHIR_CALL_METHOD(&_3, this_ptr, "serialize", &_4, property, value);
-					zephir_check_call_status();
-					zephir_array_update_zval(&data, key, &_3, PH_COPY | PH_SEPARATE);
-				}
+		RETURN_CCTOR(data);
+	}
+	zephir_is_iterable(keys, &_6, &_5, 0, 0, "bee/Serializer.zep", 32);
+	for (
+	  ; zephir_hash_get_current_data_ex(_6, (void**) &_7, &_5) == SUCCESS
+	  ; zephir_hash_move_forward_ex(_6, &_5)
+	) {
+		ZEPHIR_GET_HMKEY(key, _6, _5);
+		ZEPHIR_GET_HVALUE(value, _7);
+		if (Z_TYPE_P(key) == IS_STRING) {
+			ZEPHIR_CALL_METHOD(&property, this_ptr, "getproperty", &_8, obj, key);
+			zephir_check_call_status();
+			if (Z_TYPE_P(property) == IS_NULL) {
+				zephir_array_update_zval(&data, key, &ZEPHIR_GLOBAL(global_null), PH_COPY | PH_SEPARATE);
 			} else {
-				ZEPHIR_CALL_METHOD(&_9, this_ptr, "getproperty", &_8, obj, value);
+				ZEPHIR_CALL_METHOD(&_3, this_ptr, "serialize", &_4, property, value);
 				zephir_check_call_status();
-				zephir_array_update_zval(&data, value, &_9, PH_COPY | PH_SEPARATE);
+				zephir_array_update_zval(&data, key, &_3, PH_COPY | PH_SEPARATE);
 			}
+		} else {
+			ZEPHIR_CALL_METHOD(&_3, this_ptr, "getproperty", &_8, obj, value);
+			zephir_check_call_status();
+			zephir_array_update_zval(&data, value, &_3, PH_COPY | PH_SEPARATE);
 		}
 	}
 	RETURN_CCTOR(data);
@@ -142,7 +142,7 @@ PHP_METHOD(Bee_Serializer, getProperty) {
 	ZEPHIR_CONCAT_VSV(_2, _1, " has no accessor for ", property);
 	ZEPHIR_CALL_METHOD(NULL, _0, "__construct", NULL, _2);
 	zephir_check_call_status();
-	zephir_throw_exception_debug(_0, "bee/Serializer.zep", 61 TSRMLS_CC);
+	zephir_throw_exception_debug(_0, "bee/Serializer.zep", 62 TSRMLS_CC);
 	ZEPHIR_MM_RESTORE();
 	return;
 

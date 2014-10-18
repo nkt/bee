@@ -24,6 +24,9 @@ class SerializerTest extends \PHPUnit_Framework_TestCase
         return array(
             array($user, array(), array()),
             array($user, array('username'), array('username' => 'nkt')),
+            array(array($user), array('username'), array(array('username' => 'nkt'))),
+            // @TODO: implement this
+            // array(new \ArrayObject(array($user)), array('username'), array(array('username' => 'nkt'))),
         );
     }
 
