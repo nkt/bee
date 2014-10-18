@@ -1,6 +1,12 @@
 {
+    "name": "bee",
+    "description": "The dead simple serializer",
+    "author": "Nikita Gusakov",
+    "version": "0.0.1",
+    "namespace": "bee",
+    "verbose": false,
     "stubs": {
-        "path": "ide\/%version%\/%namespace%\/",
+        "path": "stubs/",
         "stubs-run-after-generate": false
     },
     "warnings": {
@@ -36,11 +42,5 @@
         "static-constant-class-folding": true,
         "call-gatherer-pass": true,
         "check-invalid-reads": false
-    },
-    "namespace": "bee",
-    "name": "bee",
-    "description": "",
-    "author": "",
-    "version": "0.0.1",
-    "verbose": false
+    }
 }
