@@ -23,12 +23,7 @@ class Serializer
                         let data[key] = this->serialize(property, value);
                     }
                 } else {
-                    let property = this->getProperty(obj, value);
-                    if property instanceof \DateTime {
-                        let data[value] = property->format("Y-m-d\\TH:i:sO");
-                    } else {
-                        let data[value] = property;
-                    }
+                    let data[value] = this->getProperty(obj, value);
                 }
             }
         }

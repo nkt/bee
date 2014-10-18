@@ -24,7 +24,6 @@ class SerializerTest extends \PHPUnit_Framework_TestCase
         return array(
             array($user, array(), array()),
             array($user, array('username'), array('username' => 'nkt')),
-            array($user, array('createdAt'), $user->getCreatedAt()->format(\DateTime::ISO8601)),
         );
     }
 
