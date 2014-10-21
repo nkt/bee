@@ -461,6 +461,7 @@ int zephir_read_property(zval **result, zval *object, const char *property_name,
 		}
 
 		ALLOC_INIT_ZVAL(*result);
+		ZVAL_NULL(*result);
 		return FAILURE;
 	}
 
@@ -1253,7 +1254,7 @@ int zephir_update_property_array_string(zval *object, char *property, unsigned i
 				INIT_PZVAL_COPY(new_zv, tmp);
 				tmp = new_zv;
 				zval_copy_ctor(new_zv);
-				Z_SET_REFCOUNT_P(tmp, 1);
+				Z_SET_REFCOUNT_P(tmp, 0);
 				Z_UNSET_ISREF_P(tmp);
 				separated = 1;
 			}
@@ -1269,7 +1270,7 @@ int zephir_update_property_array_string(zval *object, char *property, unsigned i
 				INIT_PZVAL_COPY(new_zv, tmp);
 				tmp = new_zv;
 				zval_copy_ctor(new_zv);
-				Z_SET_REFCOUNT_P(tmp, 1);
+				Z_SET_REFCOUNT_P(tmp, 0);
 				Z_UNSET_ISREF_P(tmp);
 				array_init(tmp);
 				separated = 1;
@@ -1313,7 +1314,7 @@ int zephir_update_property_array_append(zval *object, char *property, unsigned i
 			INIT_PZVAL_COPY(new_zv, tmp);
 			tmp = new_zv;
 			zval_copy_ctor(new_zv);
-			Z_SET_REFCOUNT_P(tmp, 1);
+			Z_SET_REFCOUNT_P(tmp, 0);
 			Z_UNSET_ISREF_P(tmp);
 			separated = 1;
 		}
@@ -1329,7 +1330,7 @@ int zephir_update_property_array_append(zval *object, char *property, unsigned i
 			INIT_PZVAL_COPY(new_zv, tmp);
 			tmp = new_zv;
 			zval_copy_ctor(new_zv);
-			Z_SET_REFCOUNT_P(tmp, 1);
+			Z_SET_REFCOUNT_P(tmp, 0);
 			Z_UNSET_ISREF_P(tmp);
 			array_init(tmp);
 			separated = 1;
@@ -1480,14 +1481,19 @@ zval* zephir_fetch_static_property_ce(zend_class_entry *ce, const char *property
 }
 
 int zephir_read_static_property_ce(zval **result, zend_class_entry *ce, const char *property, int len TSRMLS_DC) {
-	assert(ce != NULL);
-
-	*result = zephir_fetch_static_property_ce(ce, property, len TSRMLS_CC);
-	if (*result) {
-		Z_ADDREF_PP(result);
+	zval *tmp;
+	tmp = zephir_fetch_static_property_ce(ce, property, len TSRMLS_CC);
+	if (tmp) {
+		if (!Z_ISREF_P(tmp)) {
+			*result = tmp;
+			Z_ADDREF_PP(result);
+		} else {
+			ALLOC_INIT_ZVAL(*result);
+			ZVAL_ZVAL(*result, tmp, 1, 0);
+		}
 		return SUCCESS;
 	}
-
+	ALLOC_INIT_ZVAL(*result);
 	return FAILURE;
 }
 
@@ -1511,7 +1517,7 @@ static zval **zephir_std_get_static_property(zend_class_entry *ce, const char *p
 		}
 
 		#ifndef ZEPHIR_RELEASE
-		if (UNEXPECTED(!zend_verify_property_access(temp_property_info, ce TSRMLS_CC))) {
+		/*if (UNEXPECTED(!zend_verify_property_access(temp_property_info, ce TSRMLS_CC))) {
 			if (!silent) {
 				zend_error_noreturn(E_ERROR, "Cannot access %s property %s::$%s", zend_visibility_string(temp_property_info->flags), ce->name, property_name);
 			}
@@ -1523,7 +1529,7 @@ static zval **zephir_std_get_static_property(zend_class_entry *ce, const char *p
 				zend_error_noreturn(E_ERROR, "Access to undeclared static property: %s::$%s", ce->name, property_name);
 			}
 			return NULL;
-		}
+		}*/
 		#endif
 
 		zend_update_class_constants(ce TSRMLS_CC);
@@ -1548,36 +1554,42 @@ static zval **zephir_std_get_static_property(zend_class_entry *ce, const char *p
 #endif
 
 static int zephir_update_static_property_ex(zend_class_entry *scope, const char *name, int name_length,
-	zval *value, zend_property_info **property_info TSRMLS_DC)
+	zval **value, zend_property_info **property_info TSRMLS_DC)
 {
-	zval **property;
+	zval **property; zval *tmp, **safe_value;
 	zend_class_entry *old_scope = EG(scope);
+	zend_zephir_globals_def *zephir_globals_ptr = ZEPHIR_VGLOBAL;
+
 
 	/**
 	 * We have to protect super globals to avoid them make converted to references
 	 */
-	if (value == ZEPHIR_GLOBAL(global_null)) {
-		ALLOC_ZVAL(value);
-		Z_UNSET_ISREF_P(value);
-		Z_SET_REFCOUNT_P(value, 0);
-		ZVAL_NULL(value);
+	if (*value == zephir_globals_ptr->global_null) {
+		ALLOC_ZVAL(tmp);
+		Z_UNSET_ISREF_P(tmp);
+		Z_SET_REFCOUNT_P(tmp, 0);
+		ZVAL_NULL(tmp);
+		safe_value = &tmp;
 	} else {
-		if (value == ZEPHIR_GLOBAL(global_true)) {
-			ALLOC_ZVAL(value);
-			Z_UNSET_ISREF_P(value);
-			Z_SET_REFCOUNT_P(value, 0);
-			ZVAL_BOOL(value, 1);
+		if (*value == zephir_globals_ptr->global_true) {
+			ALLOC_ZVAL(tmp);
+			Z_UNSET_ISREF_P(tmp);
+			Z_SET_REFCOUNT_P(tmp, 0);
+			ZVAL_BOOL(tmp, 1);
+			safe_value = &tmp;
 		} else {
-			if (value == ZEPHIR_GLOBAL(global_false)) {
-				ALLOC_ZVAL(value);
-				Z_UNSET_ISREF_P(value);
-				Z_SET_REFCOUNT_P(value, 0);
-				ZVAL_BOOL(value, 0);
+			if (*value == zephir_globals_ptr->global_false) {
+				ALLOC_ZVAL(tmp);
+				Z_UNSET_ISREF_P(tmp);
+				Z_SET_REFCOUNT_P(tmp, 0);
+				ZVAL_BOOL(tmp, 0);
+				safe_value = &tmp;
+			} else {
+				safe_value = value;
 			}
 		}
 	}
 
-#if PHP_VERSION_ID < 50600
 	EG(scope) = scope;
 #if PHP_VERSION_ID < 50400
 	property = zend_std_get_static_property(scope, name, name_length, 0 TSRMLS_CC);
@@ -1589,32 +1601,30 @@ static int zephir_update_static_property_ex(zend_class_entry *scope, const char 
 	if (!property) {
 		return FAILURE;
 	} else {
-		if (*property != value) {
+		if (*property != *safe_value) {
 			if (PZVAL_IS_REF(*property)) {
 				zval_dtor(*property);
-				Z_TYPE_PP(property) = Z_TYPE_P(value);
-				(*property)->value = value->value;
-				if (Z_REFCOUNT_P(value) > 0) {
+				Z_TYPE_PP(property) = Z_TYPE_PP(safe_value);
+				(*property)->value = (*safe_value)->value;
+				if (Z_REFCOUNT_PP(safe_value) > 0) {
 					zval_copy_ctor(*property);
 				} else {
-					efree(value);
+					efree(*safe_value);
+					*safe_value = NULL;
 				}
 			} else {
 				zval *garbage = *property;
 
-				Z_ADDREF_P(value);
-				if (PZVAL_IS_REF(value)) {
-					SEPARATE_ZVAL(&value);
+				Z_ADDREF_PP(safe_value);
+				if (Z_ISREF_PP(safe_value)) {
+					SEPARATE_ZVAL(safe_value);
 				}
-				*property = value;
+				*property = *safe_value;
 				zval_ptr_dtor(&garbage);
 			}
 		}
 		return SUCCESS;
 	}
-#else
-	return zend_update_static_property(scope, name, name_length, value TSRMLS_CC);
-#endif
 }
 
 /**
@@ -1624,25 +1634,17 @@ int zephir_read_static_property(zval **result, const char *class_name, unsigned 
 	unsigned int property_length TSRMLS_DC) {
 	zend_class_entry **ce;
 	if (zend_lookup_class(class_name, class_length, &ce TSRMLS_CC) == SUCCESS) {
-#if PHP_VERSION_ID < 50600
 		return zephir_read_static_property_ce(result, *ce, property_name, property_length TSRMLS_CC);
-#else
-		*result = zend_read_static_property(*ce, property_name, property_length, 1 TSRMLS_CC);
-		if (*result) {
-			Z_ADDREF_PP(result);
-			return SUCCESS;
-		}
-#endif
 	}
 	return FAILURE;
 }
 
-int zephir_update_static_property_ce(zend_class_entry *ce, const char *name, int len, zval *value TSRMLS_DC) {
+int zephir_update_static_property_ce(zend_class_entry *ce, const char *name, int len, zval **value TSRMLS_DC) {
 	assert(ce != NULL);
 	return zephir_update_static_property_ex(ce, name, len, value, NULL TSRMLS_CC);
 }
 
-int zephir_update_static_property_ce_cache(zend_class_entry *ce, const char *name, int len, zval *value, zend_property_info **property_info TSRMLS_DC) {
+int zephir_update_static_property_ce_cache(zend_class_entry *ce, const char *name, int len, zval **value, zend_property_info **property_info TSRMLS_DC) {
 	assert(ce != NULL);
 	return zephir_update_static_property_ex(ce, name, len, value, property_info TSRMLS_CC);
 }
@@ -1660,9 +1662,12 @@ int zephir_update_static_property_array_multi_ce(zend_class_entry *ce, const cha
 	int i, j, l, ll, re_update, must_continue, wrap_tmp;
 	int separated = 0;
 
-	zephir_read_static_property_ce(&tmp_arr, ce, property, property_length TSRMLS_CC);
-
-	Z_DELREF_P(tmp_arr);
+	tmp_arr = zephir_fetch_static_property_ce(ce, property, property_length TSRMLS_CC);
+	if (!tmp_arr) {
+		ALLOC_INIT_ZVAL(tmp_arr);
+		array_init(tmp_arr);
+		separated = 1;
+	}
 
 	/** Separation only when refcount > 1 */
 	if (Z_REFCOUNT_P(tmp_arr) > 1) {
@@ -1869,7 +1874,7 @@ int zephir_update_static_property_array_multi_ce(zend_class_entry *ce, const cha
 	va_end(ap);
 
 	if (separated) {
-		zephir_update_static_property_ce(ce, property, property_length, tmp_arr TSRMLS_CC);
+		zephir_update_static_property_ce(ce, property, property_length, &tmp_arr TSRMLS_CC);
 	}
 
 	return SUCCESS;
@@ -1878,10 +1883,10 @@ int zephir_update_static_property_array_multi_ce(zend_class_entry *ce, const cha
 /**
  * Update a static property
  */
-int zephir_update_static_property(const char *class_name, unsigned int class_length, char *name, unsigned int name_length, zval *value TSRMLS_DC){
+int zephir_update_static_property(const char *class_name, unsigned int class_length, char *name, unsigned int name_length, zval **value TSRMLS_DC){
 	zend_class_entry **ce;
 	if (zend_lookup_class(class_name, class_length, &ce TSRMLS_CC) == SUCCESS) {
-		return zend_update_static_property(*ce, name, name_length, value TSRMLS_CC);
+		return zephir_update_static_property_ce(*ce, name, name_length, value TSRMLS_CC);
 	}
 	return FAILURE;
 }

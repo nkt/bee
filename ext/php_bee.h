@@ -4,8 +4,6 @@
 #ifndef PHP_BEE_H
 #define PHP_BEE_H 1
 
-#define ZEPHIR_RELEASE 1
-
 #include "kernel/globals.h"
 
 #define PHP_BEE_NAME        "bee"
@@ -18,6 +16,8 @@
 
 
 ZEND_BEGIN_MODULE_GLOBALS(bee)
+
+	int initialized;
 
 	/* Memory */
 	zephir_memory_entry *start_memory; /**< The first preallocated frame */
